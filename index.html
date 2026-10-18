@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KuboCare stack docs index</title>
+<style>
+*{box-sizing:border-box}
+body{font:15px/1.6 system-ui,sans-serif;margin:0;color:#1f2328;background:#fff}
+a{color:#0969da}
+.doc-header{background:#f6f8fa;border-bottom:1px solid #d0d7de;padding:1.2rem 1.5rem}
+.doc-header h1{margin:.3rem 0;font-size:1.7rem;line-height:1.25}
+.crumbs{font-size:13px;color:#59636e}.crumbs a{text-decoration:none}
+.meta{margin:0;font-size:13px;color:#59636e}
+.badge{display:inline-block;padding:0 .5em;border-radius:1em;font-size:12px;background:#ddf4ff;color:#0550ae;margin-right:.4em}
+.badge.old{background:#fff1e5;color:#953800}
+.layout{display:grid;grid-template-columns:270px minmax(0,1fr);gap:2rem;max-width:1320px;margin:0 auto;padding:1.5rem}
+.toc{position:sticky;top:1rem;align-self:start;max-height:calc(100vh - 2rem);overflow:auto;font-size:13.5px;border-right:1px solid #d0d7de;padding-right:1rem}
+.toc-title{font-weight:600;text-transform:uppercase;letter-spacing:.04em;font-size:12px;color:#59636e;margin:0 0 .5rem}
+.toc ul{list-style:none;margin:0;padding:0}.toc li{margin:.25rem 0}
+.toc ul ul{padding-left:.9rem;border-left:2px solid #eaeef2;margin:.2rem 0 .4rem}
+.toc a{text-decoration:none;color:#1f2328}.toc a:hover{color:#0969da}
+main{min-width:0}
+.doc-section{border-top:1px solid #eaeef2;padding-top:.4rem;margin-top:1.6rem}
+.doc-section.intro{border:0;margin-top:0;padding-top:0}
+h2{font-size:1.35rem;margin:.6rem 0}h3{font-size:1.1rem}
+h2,h3,h4{scroll-margin-top:1rem}
+.top{text-align:right;font-size:12px;margin:.6rem 0 0}.top a{color:#59636e;text-decoration:none}
+code,pre{font-family:ui-monospace,monospace;font-size:13px;background:#f6f8fa;border-radius:4px}
+code{padding:.1em .3em}pre{padding:.8rem;overflow:auto}pre code{padding:0;background:none}
+table{border-collapse:collapse;display:block;overflow:auto;margin:1rem 0}
+th,td{border:1px solid #d0d7de;padding:.35rem .7rem;text-align:left;vertical-align:top}
+th{background:#f6f8fa}
+blockquote{margin:0;padding:0 1rem;color:#59636e;border-left:.25em solid #d0d7de}
+pre.mermaid{background:none;text-align:center}
+.doc-footer{max-width:1320px;margin:0 auto;padding:1rem 1.5rem 2rem;font-size:13px;color:#59636e;border-top:1px solid #d0d7de}
+@media (max-width:1000px){.layout{grid-template-columns:1fr}.toc{position:static;max-height:none;border-right:0;border-bottom:1px solid #d0d7de;padding:0 0 1rem}}
+</style>
+</head>
+<body>
+<header class="doc-header" id="top">
+<nav class="crumbs">kubocare-stack</nav>
+<h1 id="stack-docs">KuboCare stack docs index</h1>
+<p class="meta">5 docs. Start with STATUS. Rebuilt by <code>tools/build_docs.py</code>.</p>
+<p><input id="q" type="search" placeholder="Filter docs by title or summary" style="width:100%;max-width:520px;padding:.45rem .6rem;border:1px solid #d0d7de;border-radius:6px;margin-top:.6rem"></p>
+</header>
+<div class="layout">
+<nav class="toc" aria-label="Contents">
+<p class="toc-title">Contents</p>
+<ul><li><a href="#start-here">Start here</a> (4)</li><li><a href="#work-log">Work log</a> (1)</li><li><a href="#other-docs">Other docs</a> (0)</li><li><a href="#decisions">Decisions (ADRs)</a> (0)</li><li><a href="#evidence">Evidence</a> (0)</li></ul>
+</nav>
+<main>
+<section class="doc-section" aria-labelledby="start-here">
+<h2 id="start-here">Start here</h2>
+<p>Where the work is, how the stack fits together and how to run it.</p>
+<table>
+<tr><th>Ref</th><th>Doc</th><th>Summary</th></tr>
+<tr><td></td><td><a href="STATUS.html">Status</a> </td><td>Where Hrishi&#x27;s work on the KuboCare app stack (gateway, socket, frontend) stands: branches, work in progress, known risks and next steps. Read this first.</td></tr>
+<tr><td></td><td><a href="DESIGN.html">Design</a> </td><td>How the KuboCare app stack fits together: gateway (FastAPI), KuboCare-Socket (socket.io), KuboCare-frontend-WEB (Expo web) and fds-inference (fall confirmation). Built from the code on 2026-10-18.</td></tr>
+<tr><td></td><td><a href="RUNBOOK.html">Runbook</a> </td><td>Commands to sync branches, run, test and migrate the gateway, socket and frontend repos locally. Run from ~/Desktop/KuboCare/kubocare-stack.</td></tr>
+<tr><td></td><td><a href="REPO_GUIDE.html">Repo guide</a> </td><td>What lives where in gateway, KuboCare-Socket and KuboCare-frontend-WEB, one row per folder or key file.</td></tr>
+</table>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="work-log">
+<h2 id="work-log">Work log</h2>
+<p>One entry per piece of work, newest first.</p>
+<table>
+<tr><th>Ref</th><th>Doc</th><th>Summary</th></tr>
+<tr><td>2026-10-18</td><td><a href="work-log/2026-10-18_stack-setup-and-agent-guides.html">Stack setup and agent guides</a> </td><td>Synced the three working branches with their bases, wrote a local agent guide for each repo, moved every CLAUDE.md to plain markdown and started this docs repo.</td></tr>
+</table>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="other-docs">
+<h2 id="other-docs">Other docs</h2>
+<p>Notes and inputs that are not core docs.</p>
+<table>
+<tr><th>Ref</th><th>Doc</th><th>Summary</th></tr>
+
+</table>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="decisions">
+<h2 id="decisions">Decisions (ADRs)</h2>
+<p>One record per real choice the plan did not settle, in number order.</p>
+<table>
+<tr><th>Ref</th><th>Doc</th><th>Summary</th></tr>
+
+</table>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="evidence">
+<h2 id="evidence">Evidence</h2>
+<p>Measured results, newest first.</p>
+<table>
+<tr><th>Ref</th><th>Doc</th><th>Summary</th></tr>
+
+</table>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+</main>
+</div>
+<script>document.getElementById('q').addEventListener('input',e=>{const q=e.target.value.toLowerCase();document.querySelectorAll('main tr').forEach((r,i)=>{if(r.querySelector('th'))return;r.style.display=r.textContent.toLowerCase().includes(q)?'':'none'})})</script>
+</body>
+</html>

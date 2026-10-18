@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Runbook</title>
+<style>
+*{box-sizing:border-box}
+body{font:15px/1.6 system-ui,sans-serif;margin:0;color:#1f2328;background:#fff}
+a{color:#0969da}
+.doc-header{background:#f6f8fa;border-bottom:1px solid #d0d7de;padding:1.2rem 1.5rem}
+.doc-header h1{margin:.3rem 0;font-size:1.7rem;line-height:1.25}
+.crumbs{font-size:13px;color:#59636e}.crumbs a{text-decoration:none}
+.meta{margin:0;font-size:13px;color:#59636e}
+.badge{display:inline-block;padding:0 .5em;border-radius:1em;font-size:12px;background:#ddf4ff;color:#0550ae;margin-right:.4em}
+.badge.old{background:#fff1e5;color:#953800}
+.layout{display:grid;grid-template-columns:270px minmax(0,1fr);gap:2rem;max-width:1320px;margin:0 auto;padding:1.5rem}
+.toc{position:sticky;top:1rem;align-self:start;max-height:calc(100vh - 2rem);overflow:auto;font-size:13.5px;border-right:1px solid #d0d7de;padding-right:1rem}
+.toc-title{font-weight:600;text-transform:uppercase;letter-spacing:.04em;font-size:12px;color:#59636e;margin:0 0 .5rem}
+.toc ul{list-style:none;margin:0;padding:0}.toc li{margin:.25rem 0}
+.toc ul ul{padding-left:.9rem;border-left:2px solid #eaeef2;margin:.2rem 0 .4rem}
+.toc a{text-decoration:none;color:#1f2328}.toc a:hover{color:#0969da}
+main{min-width:0}
+.doc-section{border-top:1px solid #eaeef2;padding-top:.4rem;margin-top:1.6rem}
+.doc-section.intro{border:0;margin-top:0;padding-top:0}
+h2{font-size:1.35rem;margin:.6rem 0}h3{font-size:1.1rem}
+h2,h3,h4{scroll-margin-top:1rem}
+.top{text-align:right;font-size:12px;margin:.6rem 0 0}.top a{color:#59636e;text-decoration:none}
+code,pre{font-family:ui-monospace,monospace;font-size:13px;background:#f6f8fa;border-radius:4px}
+code{padding:.1em .3em}pre{padding:.8rem;overflow:auto}pre code{padding:0;background:none}
+table{border-collapse:collapse;display:block;overflow:auto;margin:1rem 0}
+th,td{border:1px solid #d0d7de;padding:.35rem .7rem;text-align:left;vertical-align:top}
+th{background:#f6f8fa}
+blockquote{margin:0;padding:0 1rem;color:#59636e;border-left:.25em solid #d0d7de}
+pre.mermaid{background:none;text-align:center}
+.doc-footer{max-width:1320px;margin:0 auto;padding:1rem 1.5rem 2rem;font-size:13px;color:#59636e;border-top:1px solid #d0d7de}
+@media (max-width:1000px){.layout{grid-template-columns:1fr}.toc{position:static;max-height:none;border-right:0;border-bottom:1px solid #d0d7de;padding:0 0 1rem}}
+</style>
+</head>
+<body>
+<!-- doc:header -->
+<header class="doc-header" id="top">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Stack docs</a> / Core doc</nav>
+<h1 id="runbook">Runbook</h1>
+<p class="meta"><span class="badge">Core doc</span> <code>RUNBOOK.html</code> </p>
+</header>
+<!-- /doc:header -->
+<div class="layout">
+<nav class="toc" aria-label="Contents">
+<p class="toc-title">Contents</p>
+<ul><li><a href="#sync-branches">Sync working branches with base</a></li><li><a href="#gateway">gateway</a><ul><li><a href="#gateway-migrations">Migrations</a></li><li><a href="#gateway-tests">Tests</a></li></ul></li><li><a href="#socket">KuboCare-Socket</a></li><li><a href="#frontend">KuboCare-frontend-WEB</a></li><li><a href="#docs">This docs repo</a></li></ul>
+<p class="toc-title" style="margin-top:1rem"><a href="index.html">All docs</a></p>
+</nav>
+<main>
+<!-- doc:content -->
+<section class="doc-section intro">
+<p>Commands to sync branches, run, test and migrate the gateway, socket and frontend repos locally. Run from <code>~/Desktop/KuboCare/kubocare-stack</code>.</p>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="sync-branches">
+<h2 id="sync-branches">Sync working branches with base</h2>
+<pre><code>git -C gateway fetch origin && git -C gateway merge origin/dev-in
+git -C KuboCare-Socket fetch origin && git -C KuboCare-Socket merge origin/dev-in
+git -C KuboCare-frontend-WEB fetch origin && git -C KuboCare-frontend-WEB merge origin/dev-fastapi</code></pre>
+<p>Check you are on the working branch first: <code>git -C &lt;repo&gt; branch --show-current</code>.</p>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="gateway">
+<h2 id="gateway">gateway</h2>
+<pre><code>cd gateway
+uv sync
+uv run fastapi dev
+uv run celery -A celery_worker.celery worker --loglevel=info -P solo</code></pre>
+<ul>
+<li>Set your own <code>MQTT_SHARE_GROUP</code> in <code>.env</code> or local dev steals messages from the deployed gateway.</li>
+<li><code>/docs</code> only exists when <code>APP_ENV=development</code>.</li>
+</ul>
+<h3 id="gateway-migrations">Migrations</h3>
+<pre><code>uv run -m alembic revision --autogenerate -m "short message"
+uv run alembic upgrade head
+uv run alembic heads</code></pre>
+<p>After a migration the socket reads, refresh Prisma there (see below).</p>
+<h3 id="gateway-tests">Tests</h3>
+<pre><code>set -a; source .env; set +a
+.venv/bin/python -m app.test.test_out_event_slack</code></pre>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="socket">
+<h2 id="socket">KuboCare-Socket</h2>
+<pre><code>cd KuboCare-Socket
+npm install
+npx prisma generate
+npm start</code></pre>
+<ul>
+<li>Port 5050 by default.</li>
+<li>Tests: <code>node auth/socketAuth.test.mjs</code>, <code>node filters/ghostFilter.test.mjs</code>, <code>node filters/vizRaw.test.mjs</code>.</li>
+<li>Prisma after a gateway migration: <code>npx prisma db pull &amp;&amp; npx prisma generate</code>. Never run <code>prisma migrate</code> here.</li>
+</ul>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="frontend">
+<h2 id="frontend">KuboCare-frontend-WEB</h2>
+<pre><code>cd KuboCare-frontend-WEB
+npm install --legacy-peer-deps
+npm run web</code></pre>
+<ul>
+<li>Checks: <code>npm run lint</code>, <code>npx jest</code>, <code>npx tsc --noEmit</code>.</li>
+<li>Production build (what Amplify runs): <code>npx expo export --platform web</code>.</li>
+<li>After changing the socket's ghost filter: <code>npm run sync:ghost-filter</code>.</li>
+</ul>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="docs">
+<h2 id="docs">This docs repo</h2>
+<pre><code>cd docs-kubocare-stack
+python3 -I tools/build_docs.py</code></pre>
+<p>Run after adding or editing any doc. It adds the header and contents sidebar and rebuilds <code>index.html</code>.</p>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<!-- /doc:content -->
+</main>
+</div>
+<footer class="doc-footer"><a href="index.html">All docs</a> &middot; <a href="#top">Back to top</a></footer>
+</body>
+</html>
