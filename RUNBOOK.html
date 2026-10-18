@@ -48,13 +48,22 @@ pre.mermaid{background:none;text-align:center}
 <div class="layout">
 <nav class="toc" aria-label="Contents">
 <p class="toc-title">Contents</p>
-<ul><li><a href="#sync-branches">Sync working branches with base</a></li><li><a href="#gateway">gateway</a><ul><li><a href="#gateway-migrations">Migrations</a></li><li><a href="#gateway-tests">Tests</a></li></ul></li><li><a href="#socket">KuboCare-Socket</a></li><li><a href="#frontend">KuboCare-frontend-WEB</a></li><li><a href="#docs">This docs repo</a></li></ul>
+<ul><li><a href="#whole-stack">Whole stack</a></li><li><a href="#sync-branches">Sync working branches with base</a></li><li><a href="#gateway">gateway</a><ul><li><a href="#gateway-migrations">Migrations</a></li><li><a href="#gateway-tests">Tests</a></li></ul></li><li><a href="#socket">KuboCare-Socket</a></li><li><a href="#frontend">KuboCare-frontend-WEB</a></li><li><a href="#docs">This docs repo</a></li></ul>
 <p class="toc-title" style="margin-top:1rem"><a href="index.html">All docs</a></p>
 </nav>
 <main>
 <!-- doc:content -->
 <section class="doc-section intro">
 <p>Commands to sync branches, run, test and migrate the gateway, socket and frontend repos locally. Run from <code>~/Desktop/KuboCare/kubocare-stack</code>.</p>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="whole-stack">
+<h2 id="whole-stack">Whole stack</h2>
+<pre><code>bash scripts/setup.sh          # first time, idempotent: deps, redis container, migrations, clip dir
+bash scripts/dev.sh up         # stop + redis + gateway/socket/web, one terminal window each
+bash scripts/dev.sh health     # all three print 200
+bash scripts/dev.sh stop       # teardown</code></pre>
+<p><code>setup.sh</code> needs <code>uv</code>, Node, Docker, a running Postgres and the three <code>.env</code> files (copied by hand, never created by the script). Login, fall replay and troubleshooting steps are in <code>kubocare-stack/CLAUDE.md</code>.</p>
 <p class="top"><a href="#top">Back to top</a></p>
 </section>
 <section class="doc-section" aria-labelledby="sync-branches">

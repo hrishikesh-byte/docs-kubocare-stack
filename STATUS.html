@@ -55,7 +55,7 @@ pre.mermaid{background:none;text-align:center}
 <!-- doc:content -->
 <section class="doc-section intro">
 <p>Where Hrishi's work on the KuboCare app stack (gateway, socket, frontend) stands: branches, work in progress, known risks and next steps. Read this first.</p>
-<p>Last updated: 2026-10-18.</p>
+<p>Last updated: 2026-10-19.</p>
 <p class="top"><a href="#top">Back to top</a></p>
 </section>
 <section class="doc-section" aria-labelledby="branches">
@@ -77,6 +77,7 @@ pre.mermaid{background:none;text-align:center}
 <h2 id="in-progress">In progress</h2>
 <table>
 <tr><th>Work</th><th>Repo</th><th>State</th><th>Log</th></tr>
+<tr><td>Laptop setup kit ported (guides, scripts, tool repo branches)</td><td>all + tools</td><td>Done, stack not runnable yet</td><td><a href="work-log/2026-10-19_laptop-setup-kit-ported.html">2026-10-19</a></td></tr>
 <tr><td>Stack setup and agent guides</td><td>all</td><td>Done</td><td><a href="work-log/2026-10-18_stack-setup-and-agent-guides.html">2026-10-18</a></td></tr>
 </table>
 <p class="top"><a href="#top">Back to top</a></p>
@@ -97,6 +98,8 @@ pre.mermaid{background:none;text-align:center}
 <section class="doc-section" aria-labelledby="next-steps">
 <h2 id="next-steps">Next steps</h2>
 <ul>
+<li>Make the stack runnable on this laptop: install <code>uv</code>, copy the three <code>.env</code> files from the vault, check Postgres, then <code>bash scripts/setup.sh</code>.</li>
+<li>Copy the labeled corpus (<code>unwanted/</code>, 6.2 GB) from the old laptop if corpus tests are needed.</li>
 <li>Push the three working branches when Hrishi says so.</li>
 <li>Pick the first feature or fix and log it here.</li>
 </ul>
