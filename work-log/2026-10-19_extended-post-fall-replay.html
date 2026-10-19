@@ -67,7 +67,7 @@ pre.mermaid{background:none;text-align:center}
 </section>
 <section class="doc-section" aria-labelledby="what-changed">
 <h2 id="what-changed">What changed</h2>
-<p>Uncommitted on the working branches, pending Hrishi's review: gateway <code>dev-in-hrishikesh</code> (base <code>e962b80</code>), frontend <code>dev-fastapi-hrishikesh</code>. Socket untouched.</p>
+<p>Committed and pushed: gateway <code>dev-in-hrishikesh</code> <code>fe39173</code> (base <code>e962b80</code>), frontend <code>dev-fastapi-hrishikesh</code> <code>f1fc177</code> (base <code>b2fe254</code>). Socket untouched.</p>
 <h3 id="gateway">Gateway</h3>
 <ul>
 <li>New flag <code>EXTENDED_POST_FALL_ENABLED</code> (default <code>false</code>) and <code>INCIDENT_POST_WINDOW_SEC</code> (default 60) in <code>relay/config.py</code>, plus helpers <code>fall_window_ms</code>, <code>verdict_window_ms</code>, <code>auto_clip_delay_sec</code>.</li>
@@ -82,6 +82,7 @@ pre.mermaid{background:none;text-align:center}
 <li>Replay opens at fall - 5 s using <code>fall_time_ms</code> from the replay response. The old fallback guessed the clip centre, which on a -10/+60 tape would open 20 s after the fall (hit the Slack/SMS magic-link view).</li>
 <li>"Still recording" shown while <code>recording_complete</code> is false; the tape is re-fetched every 5 s (max 30 tries) and new frames are spliced in without moving the playhead. Stops on exit.</li>
 <li>Browser verdict scores ±10 s with a fresh pass over that slice, same as the server worker. Verdict is deferred until the tape is complete.</li>
+<li>Amber "RECORDING +40 / 60S" pill beside REPLAYING and in the transport bar while the tail records; the window label shows the planned "-10S / +60S" from the start.</li>
 <li>Labels show "-10S / +60S" (or "±10S" for centred clips). Loops and replay-from-end restart at the 5 s pre-roll instead of frame 0.</li>
 <li>Verdict CLI bundle not rebuilt: nothing it uses changed.</li>
 </ul>
@@ -102,7 +103,8 @@ pre.mermaid{background:none;text-align:center}
 <li><strong>Efficient and secure:</strong> no new endpoints or auth paths. Cost: clips and replay payload are 3.5x bigger (70 s vs 20 s); not measured on a real clip yet. Each refresh while recording is one replay fetch every 5 s for up to about a minute per open replay, plus a hindsight rebuild in the browser.</li>
 <li><strong>Regressions:</strong> opening position on magic-link replays (covered by test), truncated archive clips if the delay were not raised (covered), verdict drift (trimmed to ±10 s on both sides, covered by parity test). Posture near the old tail can change slightly after a refresh, since the hindsight pass smooths over neighbours.</li>
 <li><strong>Tests:</strong> gateway <code>app/test/test_fall_window.py</code> 7/7 (flag on and off). Frontend <code>extendedReplayWindow.test.ts</code> 11/11; full jest suite 264 passed, 13 skipped (corpus not on this laptop). <code>tsc</code>: no new errors (4 existing ones in incident screens). ESLint not installed in this checkout, not run.</li>
-<li><strong>Not tested yet:</strong> the gateway replay route end to end (no gateway venv on this laptop), corpus gates, and a live fall on kcsn0008 replayed at +15 s and +2 min.</li>
+<li><strong>Live check (2026-10-19, kcsn0008 on DEV, flag on locally):</strong> synthetic model-confirmed falls produced incidents 5791 to 5793; local replay served -10 s / +18.7 s while recording, then the full -10 s / +60 s (875 frames) with recording_complete true. Re-run before commit: frontend jest 265 passed, 13 skipped; gateway window tests 7/7, clip-store 10/10; tsc no new errors.</li>
+<li><strong>Not tested yet (superseded where noted above):</strong> the gateway replay route end to end (no gateway venv on this laptop), corpus gates, and a live fall on kcsn0008 replayed at +15 s and +2 min.</li>
 </ul>
 <p class="top"><a href="#top">Back to top</a></p>
 </section>
