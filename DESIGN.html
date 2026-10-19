@@ -117,6 +117,7 @@ flowchart LR
 <tr><td>JWT secret and claims</td><td>gateway</td><td>socket</td><td><code>KuboCare-Socket/auth/socketAuth.js</code></td></tr>
 <tr><td>Postgres schema</td><td>gateway (Alembic)</td><td>socket (Prisma pull), fds-inference</td><td><code>gateway/app/db/migrations/</code></td></tr>
 <tr><td>Ghost filter code</td><td>socket</td><td>frontend (copied)</td><td><code>npm run sync:ghost-filter</code></td></tr>
+<tr><td>Fall replay response (<code>GET /api/v1/relay/falls/{id}/replay</code>: <code>fall_time_ms</code>, <code>replay_start_ms</code>/<code>replay_end_ms</code>, <code>recording_complete</code>, <code>rows</code>)</td><td>gateway relay</td><td>frontend visualiser</td><td><code>gateway/relay/relay_app.py</code>, <code>KuboCare-frontend-WEB/features/visualizer/services/playbackService.ts</code></td></tr>
 <tr><td>Redis alert card keys</td><td>gateway</td><td>socket</td><td><code>KuboCare-Socket/utils/alertKeys.js</code></td></tr>
 </table>
 <p>Changing any of these needs a matching change on the other side.</p>
