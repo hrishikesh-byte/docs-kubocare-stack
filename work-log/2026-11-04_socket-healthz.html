@@ -92,8 +92,8 @@ pre.mermaid{background:none;text-align:center}
 <section class="doc-section" aria-labelledby="left">
 <h2 id="left">What is left</h2>
 <ul>
-<li>Seniors promote to <code>dev-in</code>, <code>uat-in</code>, <code>prod-in</code>, <code>prod-us</code>. The monitors turn green only after each deploy.</li>
-<li>After deploy, <code>curl -i https://&lt;socket host&gt;/healthz</code> per env. A 404 then means nginx needs a location for <code>/healthz</code>.</li>
+<li><b>UAT verified 2026-11-04:</b> deployed to <code>uat-in</code> (the first run failed during a GitHub Git Operations incident, the re-run passed). <code>curl -i https://uat-socket-in.kubocare.ai/healthz</code> returns 200; UAT nginx forwards every path to Node. The Kuma monitor URL was changed from <code>/</code> to <code>/healthz</code> and shows Up (19 ms).</li>
+<li>Prod: promote to <code>prod-in</code> and <code>prod-us</code>, curl <code>/healthz</code> on each socket host, then change both Kuma monitor URLs to end in <code>/healthz</code>. Without the URL change they stay red.</li>
 </ul>
 <p class="top"><a href="#top">Back to top</a></p>
 </section>
