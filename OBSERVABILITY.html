@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>kubocare-observability: end to end</title>
+<style>
+*{box-sizing:border-box}
+body{font:15px/1.6 system-ui,sans-serif;margin:0;color:#1f2328;background:#fff}
+a{color:#0969da}
+.doc-header{background:#f6f8fa;border-bottom:1px solid #d0d7de;padding:1.2rem 1.5rem}
+.doc-header h1{margin:.3rem 0;font-size:1.7rem;line-height:1.25}
+.crumbs{font-size:13px;color:#59636e}.crumbs a{text-decoration:none}
+.meta{margin:0;font-size:13px;color:#59636e}
+.badge{display:inline-block;padding:0 .5em;border-radius:1em;font-size:12px;background:#ddf4ff;color:#0550ae;margin-right:.4em}
+.badge.old{background:#fff1e5;color:#953800}
+.layout{display:grid;grid-template-columns:270px minmax(0,1fr);gap:2rem;max-width:1320px;margin:0 auto;padding:1.5rem}
+.toc{position:sticky;top:1rem;align-self:start;max-height:calc(100vh - 2rem);overflow:auto;font-size:13.5px;border-right:1px solid #d0d7de;padding-right:1rem}
+.toc-title{font-weight:600;text-transform:uppercase;letter-spacing:.04em;font-size:12px;color:#59636e;margin:0 0 .5rem}
+.toc ul{list-style:none;margin:0;padding:0}.toc li{margin:.25rem 0}
+.toc ul ul{padding-left:.9rem;border-left:2px solid #eaeef2;margin:.2rem 0 .4rem}
+.toc a{text-decoration:none;color:#1f2328}.toc a:hover{color:#0969da}
+main{min-width:0}
+.doc-section{border-top:1px solid #eaeef2;padding-top:.4rem;margin-top:1.6rem}
+.doc-section.intro{border:0;margin-top:0;padding-top:0}
+h2{font-size:1.35rem;margin:.6rem 0}h3{font-size:1.1rem}
+h2,h3,h4{scroll-margin-top:1rem}
+.top{text-align:right;font-size:12px;margin:.6rem 0 0}.top a{color:#59636e;text-decoration:none}
+code,pre{font-family:ui-monospace,monospace;font-size:13px;background:#f6f8fa;border-radius:4px}
+code{padding:.1em .3em}pre{padding:.8rem;overflow:auto}pre code{padding:0;background:none}
+table{border-collapse:collapse;display:block;overflow:auto;margin:1rem 0}
+th,td{border:1px solid #d0d7de;padding:.35rem .7rem;text-align:left;vertical-align:top}
+th{background:#f6f8fa}
+blockquote{margin:0;padding:0 1rem;color:#59636e;border-left:.25em solid #d0d7de}
+pre.mermaid{background:none;text-align:center}
+.doc-footer{max-width:1320px;margin:0 auto;padding:1rem 1.5rem 2rem;font-size:13px;color:#59636e;border-top:1px solid #d0d7de}
+@media (max-width:1000px){.layout{grid-template-columns:1fr}.toc{position:static;max-height:none;border-right:0;border-bottom:1px solid #d0d7de;padding:0 0 1rem}}
+</style>
+</head>
+<body>
+<!-- doc:header -->
+<header class="doc-header" id="top">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Stack docs</a> / Core doc</nav>
+<h1 id="observability-e2e">kubocare-observability: end to end</h1>
+<p class="meta"><span class="badge">Core doc</span> <code>OBSERVABILITY.html</code> </p>
+</header>
+<!-- /doc:header -->
+<div class="layout">
+<nav class="toc" aria-label="Contents">
+<p class="toc-title">Contents</p>
+<ul><li><a href="#at-a-glance">At a glance</a></li><li><a href="#big-picture">The big picture</a></li><li><a href="#glossary">Words you need</a></li><li><a href="#repo-map">Repo map</a></li><li><a href="#on-each-vm">What runs on each monitored VM</a><ul><li><a href="#roles">Roles</a></li></ul></li><li><a href="#life-of-a-log">Code flow: life of one log line</a></li><li><a href="#life-of-a-metric">Code flow: life of one metric</a></li><li><a href="#product-kpis">Product health from Postgres (the clever bit)</a></li><li><a href="#central-stack">The central stack, service by service</a></li><li><a href="#two-regions">One Grafana, two regions</a></li><li><a href="#alerting">Alerting</a></li><li><a href="#security">Security model</a></li><li><a href="#setup">Setup in short</a><ul><li><a href="#setup-central">Central VM (India)</a></li><li><a href="#setup-host">Each monitored VM</a></li></ul></li><li><a href="#gaps">Gaps and gotchas I found</a></li><li><a href="#where-to-start">Where to start reading</a></li></ul>
+<p class="toc-title" style="margin-top:1rem"><a href="index.html">All docs</a></p>
+</nav>
+<main>
+<!-- doc:content -->
+<section class="doc-section intro">
+<style>
+.fig{margin:1rem 0;padding:.8rem;border:1px solid #d0d7de;border-radius:8px;background:#fbfcfd}
+.fig svg{width:100%;height:auto;display:block}
+.fig figcaption{font-size:13px;color:#59636e;margin-top:.4rem}
+.callout{border-left:4px solid #0969da;background:#f1f8ff;padding:.6rem .9rem;margin:1rem 0;border-radius:0 6px 6px 0}
+.callout.warn{border-color:#bf8700;background:#fff8c5}
+.callout.bad{border-color:#cf222e;background:#ffebe9}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.8rem;margin:1rem 0}
+.card{border:1px solid #d0d7de;border-radius:8px;padding:.7rem .9rem;min-width:0}
+.card b{display:block;margin-bottom:.2rem}
+.sev{display:inline-block;padding:0 .45em;border-radius:1em;font-size:12px;font-weight:600}
+.sev.hi{background:#ffebe9;color:#a40e26}.sev.mid{background:#fff8c5;color:#7d4e00}.sev.lo{background:#ddf4ff;color:#0550ae}
+</style>
+<p>How the KuboCare monitoring stack (our in-house Datadog replacement) collects logs and metrics from every VM, stores them, shows them in Grafana and raises alerts, explained in plain words with diagrams, the code path and the gaps I found.</p>
+
+<div class="callout"><b>One sentence version.</b> A small agent (Grafana Alloy) on every server pushes that server's logs and numbers over HTTPS to a central monitoring VM per region, which stores them cheaply in Azure Blob for 90 days and lets engineers search, graph and get alerted from one Grafana at <code>monitoring.kubocare.ai</code>.</div>
+
+<p>Repo: <code>kubocare/kubocare-observability</code> (org repo, branch <code>main</code>, read at <code>b0927fa</code>, 2026-11-03). It is pure config: Docker Compose, YAML and Alloy files, plus three small scripts. No application code.</p>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="at-a-glance">
+<h2 id="at-a-glance">At a glance</h2>
+<div class="cards">
+<div class="card"><b>What it replaces</b>Datadog: logs, infra metrics, browser RUM, alerting.</div>
+<div class="card"><b>Regions</b><code>obs-india</code> serves uat-in and prod-in. <code>obs-us</code> serves prod-us, so US data stays in the US (HIPAA).</div>
+<div class="card"><b>Retention</b>90 days for logs and metrics, in Azure Blob. Local Prometheus keeps 15 days of the stack's own health.</div>
+<div class="card"><b>Who looks at it</b>Engineers via Google SSO (kubocare.com only), landing as Viewer. One Grafana covers both regions.</div>
+<div class="card"><b>Push, not pull</b>Agents push outbound. No inbound firewall rule needed on any monitored VM.</div>
+<div class="card"><b>Alerts go to</b>Email to the ops inbox. Slack is written but commented out.</div>
+</div>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="big-picture">
+<h2 id="big-picture">The big picture</h2>
+<p>Three kinds of traffic hit the monitoring VM: agents pushing data, browsers sending front-end telemetry, and humans opening Grafana. Nginx sorts them by domain name.</p>
+<figure class="fig" id="fig-big-picture">
+<svg viewBox="0 0 960 500" role="img" aria-labelledby="bp-title" font-family="system-ui,sans-serif" font-size="13">
+<title id="bp-title">Big picture: agents and browsers push to regional stacks, one Grafana reads both</title>
+<defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#57606a"/></marker></defs>
+<g id="bp-engineers"><title>Engineers</title><rect x="360" y="8" width="240" height="40" rx="8" fill="#fff" stroke="#8250df" stroke-width="1.5"/><text x="480" y="33" text-anchor="middle" font-weight="600">Engineers (Google SSO)</text></g>
+<g id="bp-india"><title>obs-india VM</title>
+<rect x="240" y="80" width="440" height="320" rx="10" fill="#f6f8fa" stroke="#0969da" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="254" y="98" font-weight="700" fill="#0969da">obs-india VM (central)</text>
+<rect x="260" y="108" width="400" height="36" rx="6" fill="#ddf4ff" stroke="#0969da"/><text x="460" y="131" text-anchor="middle" font-weight="600">nginx: TLS, basic auth, routes by domain</text>
+<rect x="260" y="170" width="190" height="44" rx="6" fill="#fff" stroke="#8250df"/><text x="355" y="190" text-anchor="middle" font-weight="600">Grafana</text><text x="355" y="206" text-anchor="middle" fill="#59636e" font-size="11">org 1 India, org 2 US</text>
+<rect x="470" y="170" width="190" height="44" rx="6" fill="#fff" stroke="#8250df"/><text x="565" y="190" text-anchor="middle" font-weight="600">Uptime Kuma</text><text x="565" y="206" text-anchor="middle" fill="#59636e" font-size="11">uptime.kubocare.ai</text>
+<rect x="260" y="240" width="122" height="44" rx="6" fill="#fff" stroke="#1a7f37"/><text x="321" y="260" text-anchor="middle" font-weight="600">Mimir</text><text x="321" y="276" text-anchor="middle" fill="#59636e" font-size="11">metrics</text>
+<rect x="399" y="240" width="122" height="44" rx="6" fill="#fff" stroke="#1a7f37"/><text x="460" y="260" text-anchor="middle" font-weight="600">Loki</text><text x="460" y="276" text-anchor="middle" fill="#59636e" font-size="11">logs</text>
+<rect x="538" y="240" width="122" height="44" rx="6" fill="#fff" stroke="#bf8700"/><text x="599" y="260" text-anchor="middle" font-weight="600">Alloy (obs)</text><text x="599" y="276" text-anchor="middle" fill="#59636e" font-size="11">Faro receiver</text>
+<rect x="260" y="310" width="261" height="40" rx="6" fill="#fff" stroke="#57606a"/><text x="390" y="335" text-anchor="middle">Prometheus: scrapes the stack itself</text>
+<text x="460" y="385" text-anchor="middle" fill="#59636e" font-size="11">monitoring.kubocare.ai, obs-in.kubocare.ai, uptime.kubocare.ai all land here</text>
+</g>
+<g id="bp-blob-in"><title>Azure Blob India</title><rect x="260" y="430" width="400" height="40" rx="20" fill="#fff8c5" stroke="#bf8700"/><text x="460" y="455" text-anchor="middle">Azure Blob <tspan font-weight="600">kubocareobsindia</tspan>: mimir-blocks, loki-chunks</text></g>
+<g id="bp-vms-in"><title>India VMs</title><rect x="16" y="170" width="190" height="150" rx="8" fill="#fff" stroke="#57606a"/><text x="111" y="192" text-anchor="middle" font-weight="700">uat-in + prod-in VMs</text>
+<text x="30" y="216">app, db, kafka, mqtt, vpn</text><text x="30" y="240" fill="#59636e" font-size="12">each runs one Alloy agent</text><text x="30" y="262" fill="#59636e" font-size="12">container logs + host,</text><text x="30" y="280" fill="#59636e" font-size="12">container and role metrics</text><text x="30" y="306" fill="#59636e" font-size="11">hosts/install.sh</text></g>
+<g id="bp-browser"><title>Browsers</title><rect x="16" y="350" width="190" height="50" rx="8" fill="#fff" stroke="#bf8700"/><text x="111" y="372" text-anchor="middle" font-weight="600">Web app in browser</text><text x="111" y="389" text-anchor="middle" fill="#59636e" font-size="11">Faro RUM (planned)</text></g>
+<g id="bp-us"><title>obs-us VM</title>
+<rect x="730" y="80" width="214" height="200" rx="10" fill="#f6f8fa" stroke="#cf222e" stroke-width="1.5" stroke-dasharray="5 4"/><text x="744" y="98" font-weight="700" fill="#cf222e">obs-us VM (headless)</text>
+<rect x="746" y="108" width="182" height="34" rx="6" fill="#ffebe9" stroke="#cf222e"/><text x="837" y="130" text-anchor="middle" font-weight="600">nginx</text>
+<rect x="746" y="152" width="86" height="40" rx="6" fill="#fff" stroke="#1a7f37"/><text x="789" y="177" text-anchor="middle">Mimir</text>
+<rect x="842" y="152" width="86" height="40" rx="6" fill="#fff" stroke="#1a7f37"/><text x="885" y="177" text-anchor="middle">Loki</text>
+<rect x="746" y="202" width="182" height="34" rx="6" fill="#fff" stroke="#57606a"/><text x="837" y="224" text-anchor="middle" font-size="12">Prometheus + Alloy</text>
+<text x="837" y="262" text-anchor="middle" fill="#59636e" font-size="11">no Grafana, no Uptime Kuma</text></g>
+<g id="bp-blob-us"><title>Azure Blob US</title><rect x="730" y="300" width="214" height="40" rx="20" fill="#fff8c5" stroke="#bf8700"/><text x="837" y="325" text-anchor="middle">Blob <tspan font-weight="600">kubocareobsus</tspan></text></g>
+<g id="bp-vms-us"><title>US VMs</title><rect x="730" y="400" width="214" height="56" rx="8" fill="#fff" stroke="#57606a"/><text x="837" y="423" text-anchor="middle" font-weight="700">prod-us VMs</text><text x="837" y="442" text-anchor="middle" fill="#59636e" font-size="12">same Alloy agent</text></g>
+<g fill="none" stroke="#57606a" stroke-width="1.6" marker-end="url(#a1)">
+<path id="e-eng" d="M480,48 V106"><title>Engineers open monitoring.kubocare.ai</title></path>
+<path id="e-vms-in" d="M206,220 H258 V146"><title>Agents push logs and metrics to obs-in</title></path>
+<path id="e-browser" d="M206,375 H232 V140 H258"><title>Faro posts to /faro/</title></path>
+<path id="e-store-mimir" d="M321,284 V300 M321,350 V428"><title>Mimir writes blocks to Blob</title></path>
+<path id="e-store-loki" d="M460,284 V428"><title>Loki writes chunks to Blob</title></path>
+<path id="e-peer" d="M450,192 H700 V125 H744" stroke="#cf222e" stroke-dasharray="6 4"><title>Grafana org 2 reads US stack</title></path>
+<path id="e-vms-us" d="M940,400 V360 H950 V125 H930"><title>US agents push to obs-us</title></path>
+<path id="e-us-blob" d="M837,236 V298"><title>US stack stores in US Blob</title></path>
+</g>
+<text x="488" y="72" fill="#57606a" font-size="11">monitoring.kubocare.ai</text>
+<text x="214" y="212" fill="#57606a" font-size="11">push</text>
+<text x="590" y="186" fill="#cf222e" font-size="11">org 2 reads (IP allowlist)</text>
+</svg>
+<figcaption>Solid arrows: data pushed in. Dashed red: the one cross-region link, Grafana in India reading the US stack through its nginx. Source: <code>docker-compose.yml</code>, <code>nginx/obs.conf.template</code>.</figcaption>
+</figure>
+
+<table>
+<tr><th>Domain</th><th>Who uses it</th><th>What nginx does</th></tr>
+<tr><td><code>monitoring.kubocare.ai</code> (<code>OBS_DOMAIN</code>)</td><td>Humans</td><td>Proxies to Grafana. Also accepts <code>/faro/</code>.</td></tr>
+<tr><td><code>obs-in.kubocare.ai</code> (<code>INGEST_DOMAIN</code>)</td><td>Agents, browsers, peer reads</td><td><code>/loki/api/v1/push</code> to Loki, <code>/api/v1/write</code> to Mimir, <code>/faro/</code> to Alloy, read paths <code>/loki/</code> and <code>/prometheus/</code> only from <code>PEER_ALLOW_IP</code>. Anything else redirects to the portal.</td></tr>
+<tr><td><code>uptime.kubocare.ai</code> (<code>UPTIME_DOMAIN</code>)</td><td>Humans</td><td>Proxies to Uptime Kuma (status checks, status pages).</td></tr>
+<tr><td><code>obs-us.kubocare.ai</code></td><td>US agents, India Grafana</td><td>Same ingest rules as obs-in, on the US VM. Only India's public IP may read.</td></tr>
+</table>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="glossary">
+<h2 id="glossary">Words you need</h2>
+<table>
+<tr><th>Term</th><th>Plain meaning</th></tr>
+<tr><td>Metric</td><td>A number over time, like CPU % or "rows pending". Cheap to store, good for graphs and alerts.</td></tr>
+<tr><td>Log line</td><td>One line of text a container printed. Good for "what exactly happened".</td></tr>
+<tr><td>Label</td><td>A tag on every metric and log, like <code>env=prod</code>, <code>host=vm-kubo-prod-db-001</code>, <code>role=db</code>. This is how you filter.</td></tr>
+<tr><td>Grafana Alloy</td><td>The agent. Reads logs, collects metrics, attaches labels, pushes them out.</td></tr>
+<tr><td>Mimir</td><td>Long-term metric database. Speaks the Prometheus query language (PromQL).</td></tr>
+<tr><td>Loki</td><td>Log database. Indexes labels only, not the text, so it is cheap. Queried with LogQL.</td></tr>
+<tr><td>Prometheus</td><td>Here only a small local scraper that checks the stack itself and forwards to Mimir.</td></tr>
+<tr><td>Remote write</td><td>The HTTP protocol Alloy uses to push metrics into Mimir.</td></tr>
+<tr><td>Faro</td><td>Grafana's browser SDK: JS errors, page speed, user sessions (RUM, real user monitoring).</td></tr>
+<tr><td>Grafana org</td><td>A separate workspace inside one Grafana. Org 1 = India, org 2 = US.</td></tr>
+<tr><td>Compose profile</td><td>A tag on a service so it only starts when asked, for example <code>--profile ui</code> for Grafana.</td></tr>
+</table>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="repo-map">
+<h2 id="repo-map">Repo map</h2>
+<p>The repo has two halves: the root runs on the monitoring VMs, <code>hosts/</code> runs on every monitored VM.</p>
+<table>
+<tr><th>Path</th><th>Runs on</th><th>What it does</th></tr>
+<tr><td><code>docker-compose.yml</code></td><td>obs VM</td><td>All central services: loki, mimir, prometheus, grafana, uptime-kuma, alloy, nginx, certbot.</td></tr>
+<tr><td><code>nginx/obs.conf.template</code></td><td>obs VM</td><td>The front door. Domain routing, basic auth, IP allowlist, Faro rate limit (20 req/s per IP).</td></tr>
+<tr><td><code>loki/loki.yaml</code></td><td>obs VM</td><td>Single-node Loki, stores in Blob container <code>loki-chunks</code>, retention per env.</td></tr>
+<tr><td><code>mimir/mimir.yaml</code></td><td>obs VM</td><td>Single-node Mimir, Blob container <code>mimir-blocks</code>, 90 day retention, 500k series cap.</td></tr>
+<tr><td><code>prometheus/prometheus.yml</code></td><td>obs VM</td><td>Scrapes mimir, loki, grafana, alloy and forwards to Mimir: "the monitor is monitored".</td></tr>
+<tr><td><code>alloy-obs/config.alloy</code></td><td>obs VM</td><td>Faro receiver for browsers plus the stack's own container logs into Loki.</td></tr>
+<tr><td><code>grafana/provisioning/</code></td><td>obs VM</td><td>Datasources, dashboards, alert rules and contact points as code, for both orgs.</td></tr>
+<tr><td><code>scripts/bootstrap-orgs.sh</code></td><td>obs VM, once</td><td>Creates org 1 India and org 2 US before provisioning can load.</td></tr>
+<tr><td><code>scripts/gen-peer-rules.py</code></td><td>dev laptop</td><td>Copies India alert rules into the US (<code>*-us.yaml</code>) so there is one source of truth.</td></tr>
+<tr><td><code>scripts/bootstrap-uptime.py</code></td><td>obs VM, once</td><td>Creates the Uptime Kuma admin and copies Grafana's SMTP settings into it.</td></tr>
+<tr><td><code>hosts/install.sh</code></td><td>monitored VM</td><td>One-line onboarding: writes <code>.env</code>, starts the agent and role exporters.</td></tr>
+<tr><td><code>hosts/docker-compose.yml</code></td><td>monitored VM</td><td>Alloy (always) plus pgbouncer, nginx and mosquitto exporters under role profiles.</td></tr>
+<tr><td><code>hosts/alloy/base.alloy</code></td><td>monitored VM</td><td>Same on every host: container logs, host metrics, container metrics.</td></tr>
+<tr><td><code>hosts/alloy/roles/*.alloy</code></td><td>monitored VM</td><td>Extra collection per role: app, db, kafka, mqtt, vpn.</td></tr>
+<tr><td><code>hosts/alloy/postgres-queries.yaml</code></td><td>db VM</td><td>SQL that turns KuboCare tables into product health numbers.</td></tr>
+</table>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="on-each-vm">
+<h2 id="on-each-vm">What runs on each monitored VM</h2>
+<p>One Alloy container per VM. It runs with host networking, host PID and read-only mounts of <code>/</code>, <code>/sys</code> and the Docker socket. That is what lets one container see every other container and the machine itself.</p>
+<figure class="fig" id="fig-agent">
+<svg viewBox="0 0 960 360" role="img" aria-labelledby="ag-title" font-family="system-ui,sans-serif" font-size="13">
+<title id="ag-title">Inside the host agent: two pipelines, logs and metrics</title>
+<defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#57606a"/></marker></defs>
+<text x="20" y="22" font-weight="700" fill="#59636e">SOURCES</text><text x="300" y="22" font-weight="700" fill="#59636e">ALLOY PIPELINE</text><text x="770" y="22" font-weight="700" fill="#59636e">OUT (HTTPS)</text>
+<g id="ag-src-logs"><title>Docker container stdout</title><rect x="20" y="40" width="220" height="50" rx="6" fill="#fff" stroke="#57606a"/><text x="130" y="62" text-anchor="middle" font-weight="600">Docker containers</text><text x="130" y="79" text-anchor="middle" fill="#59636e" font-size="11">stdout of gateway, socket, kafka...</text></g>
+<g id="ag-logs"><title>Log pipeline</title>
+<rect x="290" y="40" width="130" height="50" rx="6" fill="#ddf4ff" stroke="#0969da"/><text x="355" y="62" text-anchor="middle" font-size="12" font-weight="600">discover + tag</text><text x="355" y="79" text-anchor="middle" fill="#59636e" font-size="11">container, service</text>
+<rect x="440" y="40" width="150" height="50" rx="6" fill="#ddf4ff" stroke="#0969da"/><text x="515" y="62" text-anchor="middle" font-size="12" font-weight="600">parse</text><text x="515" y="79" text-anchor="middle" fill="#59636e" font-size="11">drop Kafka chatter, add level</text>
+<rect x="610" y="40" width="130" height="50" rx="6" fill="#ddf4ff" stroke="#0969da"/><text x="675" y="62" text-anchor="middle" font-size="12" font-weight="600">loki.write</text><text x="675" y="79" text-anchor="middle" fill="#59636e" font-size="11">+ env, host, role</text></g>
+<g id="ag-out-logs"><title>Log push endpoint</title><rect x="770" y="40" width="170" height="50" rx="6" fill="#fff" stroke="#1a7f37"/><text x="855" y="62" text-anchor="middle" font-size="12" font-weight="600">/loki/api/v1/push</text><text x="855" y="79" text-anchor="middle" fill="#59636e" font-size="11">to Loki</text></g>
+<g id="ag-src-host"><title>Host metrics</title><rect x="20" y="130" width="220" height="40" rx="6" fill="#fff" stroke="#57606a"/><text x="130" y="155" text-anchor="middle">Host: CPU, RAM, disk, net</text></g>
+<g id="ag-src-cad"><title>Container metrics</title><rect x="20" y="180" width="220" height="40" rx="6" fill="#fff" stroke="#57606a"/><text x="130" y="205" text-anchor="middle">Per-container usage (cAdvisor)</text></g>
+<g id="ag-src-role"><title>Role exporters</title><rect x="20" y="230" width="220" height="110" rx="6" fill="#fff8c5" stroke="#bf8700"/><text x="130" y="252" text-anchor="middle" font-weight="600">Role extras</text>
+<text x="34" y="274" font-size="12">app: gateway, Redis x2</text><text x="34" y="292" font-size="12">db: Postgres + SQL KPIs, PgBouncer</text><text x="34" y="310" font-size="12">kafka: lag, Connect status</text><text x="34" y="328" font-size="12">mqtt: nginx, mosquitto, TLS expiry</text></g>
+<g id="ag-metrics"><title>Metric pipeline</title>
+<rect x="290" y="180" width="200" height="50" rx="6" fill="#dafbe1" stroke="#1a7f37"/><text x="390" y="202" text-anchor="middle" font-size="12" font-weight="600">prometheus.scrape</text><text x="390" y="219" text-anchor="middle" fill="#59636e" font-size="11">every 30 to 60 s, 5 min for TLS</text>
+<rect x="540" y="180" width="200" height="50" rx="6" fill="#dafbe1" stroke="#1a7f37"/><text x="640" y="202" text-anchor="middle" font-size="12" font-weight="600">prometheus.remote_write</text><text x="640" y="219" text-anchor="middle" fill="#59636e" font-size="11">+ env, host, role</text></g>
+<g id="ag-out-metrics"><title>Metric push endpoint</title><rect x="770" y="180" width="170" height="50" rx="6" fill="#fff" stroke="#1a7f37"/><text x="855" y="202" text-anchor="middle" font-size="12" font-weight="600">/api/v1/write</text><text x="855" y="219" text-anchor="middle" fill="#59636e" font-size="11">to Mimir</text></g>
+<g fill="none" stroke="#57606a" stroke-width="1.5" marker-end="url(#a2)">
+<path d="M240,65 H288"/><path d="M420,65 H438"/><path d="M590,65 H608"/><path d="M740,65 H768"/>
+<path d="M240,150 H265 V200 H288"/><path d="M240,200 H288"/><path d="M240,285 H265 V210 H288"/>
+<path d="M490,205 H538"/><path d="M740,205 H768"/>
+</g>
+<text x="770" y="270" font-size="12" fill="#59636e">Both pushes use basic auth</text><text x="770" y="288" font-size="12" fill="#59636e">user <tspan font-family="monospace">alloy</tspan>, password from</text><text x="770" y="306" font-size="12" fill="#59636e"><tspan font-family="monospace">OBS_PASSWORD</tspan> in hosts/.env</text>
+</svg>
+<figcaption>Source: <code>hosts/alloy/base.alloy</code> and <code>hosts/alloy/roles/*.alloy</code>. Alloy loads <code>base.alloy</code> plus the one role file mounted as <code>role.alloy</code>, picked by <code>HOST_ROLE</code>.</figcaption>
+</figure>
+
+<h3 id="roles">Roles</h3>
+<table>
+<tr><th>Role</th><th>Extra it collects</th><th>Extra containers</th><th>Needs in <code>hosts/.env</code></th></tr>
+<tr><td><code>app</code></td><td>Gateway <code>/metrics</code>, app Redis, fds-inference Redis</td><td>none</td><td><code>GATEWAY_METRICS_ADDR</code>, <code>REDIS_ADDR</code>, <code>FDS_REDIS_ADDR</code> (optional)</td></tr>
+<tr><td><code>db</code></td><td>Postgres internals, KuboCare KPI SQL, PgBouncer pools, Redis</td><td><code>pgbouncer-exporter</code></td><td><code>PG_DSN</code>, <code>PGBOUNCER_DSN</code>, <code>DB_REDIS_ADDR</code>. Needs the read-only <code>alloy_monitor</code> DB user from the README.</td></tr>
+<tr><td><code>kafka</code></td><td>Consumer lag, topic offsets, <code>mqtt-source</code> connector is RUNNING, JMX (once added)</td><td>none</td><td><code>KAFKA_ADDR</code>, <code>CONNECT_STATUS_URL</code></td></tr>
+<tr><td><code>mqtt</code></td><td>nginx connections, mosquitto clients and message rates, MQTT TLS cert expiry</td><td><code>nginx-exporter</code>, <code>mosquitto-exporter</code></td><td><code>NGINX_STATUS_URL</code>, <code>MQTT_URL</code>, <code>MQTT_TLS_TARGET</code></td></tr>
+<tr><td><code>vpn</code></td><td>Nothing extra (base only)</td><td>none</td><td>none</td></tr>
+</table>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="life-of-a-log">
+<h2 id="life-of-a-log">Code flow: life of one log line</h2>
+<p>Say the gateway container prints <code>ERROR Context or Resident not found</code> on <code>vm-kubo-prod-app-001</code>.</p>
+<ol>
+<li><b>Discover.</b> <code>discovery.docker</code> lists running containers via the Docker socket; <code>discovery.relabel</code> turns Docker metadata into labels <code>container</code>, <code>service</code>, <code>project</code>. <i>(base.alloy)</i></li>
+<li><b>Read.</b> <code>loki.source.docker</code> tails that container's stdout.</li>
+<li><b>Clean.</b> <code>loki.process "parse"</code> drops Kafka Connect's <code>INFO WorkerSourceTask</code> noise (about a quarter of all volume), finds the first severity word with a regex, normalises <code>WARNING</code> to <code>WARN</code> and sets it as the <code>level</code> label.</li>
+<li><b>Tag and push.</b> <code>loki.write "obs"</code> adds <code>env</code>, <code>host</code>, <code>role</code> and POSTs to <code>$OBS_URL/loki/api/v1/push</code> with basic auth.</li>
+<li><b>Front door.</b> nginx on obs-in checks the password against <code>nginx/htpasswd</code> and proxies to <code>loki:3100</code>.</li>
+<li><b>Store.</b> Loki indexes the labels, compresses the text into chunks in Blob container <code>loki-chunks</code>. The compactor deletes chunks older than <code>LOKI_RETENTION_PROD</code> (90 days; uat has its own <code>LOKI_RETENTION_UAT</code>).</li>
+<li><b>Find it.</b> In Grafana Explore pick <b>Loki</b> and run <code>{env="prod", service="gateway", level="ERROR"}</code>, or use the Log lines panel on the KuboCare Overview dashboard.</li>
+</ol>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="life-of-a-metric">
+<h2 id="life-of-a-metric">Code flow: life of one metric</h2>
+<p>Example: the "fall incidents in tenant scope" number from the prod DB.</p>
+<ol>
+<li><b>Query.</b> Every 60 s the db-role <code>prometheus.exporter.postgres</code> runs the SQL in <code>postgres-queries.yaml</code> as <code>alloy_monitor</code>. It returns <code>kubocare_fall_incidents_in_tenant_scope_24h</code> and friends.</li>
+<li><b>Scrape.</b> <code>prometheus.scrape "postgres"</code> collects it and hands it to <code>prometheus.remote_write "obs"</code>, which adds <code>env</code>, <code>host</code>, <code>role</code>.</li>
+<li><b>Push.</b> POST to <code>$OBS_URL/api/v1/write</code>. nginx checks basic auth and rewrites to Mimir's <code>/api/v1/push</code>.</li>
+<li><b>Store.</b> Mimir keeps the last few hours on local disk, cuts 2-hour blocks and uploads them to <code>mimir-blocks</code>. Its compactor deletes blocks older than <code>MIMIR_RETENTION</code> (90d).</li>
+<li><b>Use.</b> The Overview dashboard stat panel and the <code>kc-fall-webhooks-stopped</code> alert both query it through the datasource named <b>Mimir</b> (uid <code>prometheus</code>).</li>
+</ol>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="product-kpis">
+<h2 id="product-kpis">Product health from Postgres (the clever bit)</h2>
+<p>Host metrics tell you a server is alive. They do not tell you the product is working. Some KuboCare failures never throw an error: a table just stops changing. <code>postgres-queries.yaml</code> reads the KuboCare schema directly so those become alertable numbers.</p>
+<table>
+<tr><th>Metric</th><th>What it counts</th><th>Alert built on it</th></tr>
+<tr><td><code>kubocare_fall_incidents_in_tenant_scope_24h</code></td><td>Fall or suspected incidents in 24 h on devices listed in an active tenant's <code>integration_config.devices</code></td><td rowspan="2">Fall webhooks stopped reaching tenants: incidents &gt; 0 but webhooks = 0 for 30 min (critical)</td></tr>
+<tr><td><code>kubocare_fall_webhooks_24h</code></td><td>Fall webhook rows created in <code>webhook_outbox</code> in 24 h</td></tr>
+<tr><td><code>kubocare_fall_outbox_pending</code>, <code>_outbox_failed_24h</code></td><td>Webhooks waiting, webhooks failed</td><td>Outbox not draining: pending &gt; 20 or failed &gt; 5 (warning)</td></tr>
+<tr><td><code>kubocare_fall_model_confirmations_24h</code></td><td><code>fall_observations</code> rows of type <code>kubocare_model</code> (fds-inference confirmations)</td><td>Dashboard only</td></tr>
+<tr><td><code>kubocare_freshness_age_seconds{source}</code></td><td>Age of the newest row in <code>insight_baselines</code> and each daily <code>wellness_*</code> type</td><td>Baselines older than 26 h; wellness older than 40 h (Databricks notebook missed a run)</td></tr>
+</table>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="central-stack">
+<h2 id="central-stack">The central stack, service by service</h2>
+<table>
+<tr><th>Service</th><th>Image</th><th>Inside port</th><th>Profile</th><th>Keeps data in</th></tr>
+<tr><td>nginx</td><td>nginx 1.27</td><td>80, 443 (public)</td><td>always</td><td>none</td></tr>
+<tr><td>loki</td><td>grafana/loki 3.5.0</td><td>3100</td><td>always</td><td>Blob <code>loki-chunks</code>, local index cache</td></tr>
+<tr><td>mimir</td><td>grafana/mimir 2.15.0</td><td>8080</td><td>always</td><td>Blob <code>mimir-blocks</code>, local recent data</td></tr>
+<tr><td>prometheus</td><td>prom/prometheus v3.5.0</td><td>9090 (under <code>/prometheus/</code>)</td><td>always</td><td>local, 15 days / 10 GB</td></tr>
+<tr><td>alloy</td><td>grafana/alloy v1.10.0</td><td>12345 (self), 12347 (Faro)</td><td>always</td><td>local WAL</td></tr>
+<tr><td>grafana</td><td>grafana 12.1.0</td><td>3000</td><td><code>ui</code> (India only)</td><td>local SQLite volume</td></tr>
+<tr><td>uptime-kuma</td><td>uptime-kuma 1.23.16</td><td>3001</td><td><code>ui</code> (India only)</td><td>local volume</td></tr>
+<tr><td>certbot, uptime-kuma-init</td><td>one-shots</td><td>none</td><td><code>setup</code></td><td>Let's Encrypt volume</td></tr>
+</table>
+<p>Azure access has no stored keys: the obs VM's managed identity has <b>Storage Blob Data Contributor</b> on the storage account (Loki, Mimir) and <b>Monitoring Reader</b> on the subscription (the Grafana Azure Monitor datasource).</p>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="two-regions">
+<h2 id="two-regions">One Grafana, two regions</h2>
+<p>Grafana runs only in India. The US VM is "headless": it stores data but has no UI. Two tricks make this work.</p>
+<ul>
+<li><b>Same datasource ids in both orgs.</b> Org 1 India's <b>Mimir</b> and <b>Loki</b> point at local containers; org 2 US's point at <code>$PEER_OBS_URL</code> with basic auth. Both use uids <code>prometheus</code> and <code>loki</code>, so one dashboard JSON and one rule file work in both orgs unchanged. Switch region with the org switcher, top left.</li>
+<li><b>US read path is locked down.</b> The US nginx only serves <code>/loki/</code> and <code>/prometheus/</code> to <code>PEER_ALLOW_IP</code> (India's public IP) and still asks for the password.</li>
+</ul>
+<p>Org 2 cannot exist before Grafana boots, but provisioning that mentions org 2 kills Grafana at boot. <code>bootstrap-orgs.sh</code> breaks the loop: it boots Grafana once with an empty provisioning folder, creates org 2 through the API, then restarts it with full provisioning.</p>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="alerting">
+<h2 id="alerting">Alerting</h2>
+<figure class="fig" id="fig-alerts">
+<svg viewBox="0 0 960 150" role="img" aria-labelledby="al-title" font-family="system-ui,sans-serif" font-size="13">
+<title id="al-title">Alert flow from rule to inbox</title>
+<defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#57606a"/></marker></defs>
+<g id="al-rule"><title>Rule evaluation</title><rect x="10" y="40" width="170" height="64" rx="6" fill="#fff" stroke="#8250df"/><text x="95" y="66" text-anchor="middle" font-weight="600">Grafana rule</text><text x="95" y="86" text-anchor="middle" fill="#59636e" font-size="11">every 1 min / 5 min</text></g>
+<g id="al-query"><title>Query</title><rect x="210" y="40" width="190" height="64" rx="6" fill="#fff" stroke="#1a7f37"/><text x="305" y="66" text-anchor="middle" font-weight="600">Query A</text><text x="305" y="86" text-anchor="middle" fill="#59636e" font-size="11">Mimir or Loki (org 2: via peer)</text></g>
+<g id="al-thresh"><title>Threshold</title><rect x="430" y="40" width="160" height="64" rx="6" fill="#fff" stroke="#57606a"/><text x="510" y="66" text-anchor="middle" font-weight="600">Threshold C</text><text x="510" y="86" text-anchor="middle" fill="#59636e" font-size="11">must hold for "for:"</text></g>
+<g id="al-policy"><title>Policy</title><rect x="620" y="40" width="160" height="64" rx="6" fill="#fff" stroke="#57606a"/><text x="700" y="66" text-anchor="middle" font-weight="600">Policy</text><text x="700" y="86" text-anchor="middle" fill="#59636e" font-size="11">group by alert, env, host</text></g>
+<g id="al-email"><title>Contact point</title><rect x="810" y="40" width="140" height="64" rx="6" fill="#ffebe9" stroke="#cf222e"/><text x="880" y="66" text-anchor="middle" font-weight="600">Email ops</text><text x="880" y="86" text-anchor="middle" fill="#59636e" font-size="11">repeat every 4 h</text></g>
+<g fill="none" stroke="#57606a" stroke-width="1.5" marker-end="url(#a3)"><path d="M180,72 H208"/><path d="M400,72 H428"/><path d="M590,72 H618"/><path d="M780,72 H808"/></g>
+<text x="10" y="132" fill="#59636e" font-size="12">Slack contact points exist in contact-points.yaml but are commented out. Edit rules-platform.yaml / rules-kubocare.yaml, then run scripts/gen-peer-rules.py to regenerate the -us copies.</text>
+</svg>
+</figure>
+<table>
+<tr><th>Alert</th><th>Fires when</th><th>Severity</th></tr>
+<tr><td>DeadMansSwitch</td><td>Always (heartbeat). India org only.</td><td>none</td></tr>
+<tr><td>Host stopped reporting</td><td>A host had <code>node</code> metrics 10 min ago and has none now</td><td>critical</td></tr>
+<tr><td>Disk space low</td><td>Under 15% free for 15 min</td><td>warning</td></tr>
+<tr><td>Memory pressure</td><td>Over 92% used for 15 min</td><td>warning</td></tr>
+<tr><td>TLS certificate expiring</td><td>Probed cert expires in under 14 days</td><td>warning</td></tr>
+<tr><td>Kafka Connect mqtt-source not RUNNING</td><td>Connector status probe fails for 5 min (fall scoring starves)</td><td>critical</td></tr>
+<tr><td>Kafka consumer lag high</td><td>A group over 1000 messages behind for 10 min</td><td>warning</td></tr>
+<tr><td>Fall webhooks stopped / outbox not draining / baselines stale / wellness stale</td><td>See <a href="#product-kpis">product health</a></td><td>critical / warning</td></tr>
+<tr><td>Daily pipeline did not complete</td><td>No success line from <code>service="daily-pipeline"</code> in 26 h</td><td>warning</td></tr>
+<tr><td>US observability stack unreachable</td><td>US org cannot read <code>up{job="loki"}</code> for 5 min</td><td>critical</td></tr>
+</table>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="security">
+<h2 id="security">Security model</h2>
+<ul>
+<li><b>TLS everywhere public.</b> One Let's Encrypt cert per VM covering all its domains, HSTS on, TLS 1.2+.</li>
+<li><b>Write path:</b> basic auth, one shared user <code>alloy</code> in <code>nginx/htpasswd</code> for all hosts.</li>
+<li><b>Read path for the peer:</b> IP allowlist plus the same basic auth.</li>
+<li><b>Humans:</b> Google SSO limited to <code>kubocare.com</code>, everyone lands as Viewer, sign-up and anonymous off. Local admin is break-glass only.</li>
+<li><b>Cloud:</b> managed identity, no storage keys or client secrets in files.</li>
+<li><b>Patient data:</b> logs can contain PHI, which is why US logs stay in US Blob and retention is capped.</li>
+<li><b>Agents:</b> the host Alloy is privileged with root filesystem read access. Needed to see everything, but it makes the agent host-level sensitive.</li>
+</ul>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="setup">
+<h2 id="setup">Setup in short</h2>
+<h3 id="setup-central">Central VM (India)</h3>
+<pre><code>cp .env.example .env                                   # fill domains, Azure, passwords, SMTP
+htpasswd -bc ./nginx/htpasswd alloy "&lt;push password&gt;"
+docker compose run --rm -p 80:80 -e CERTBOT_STANDALONE=1 certbot
+docker compose up -d loki mimir prometheus alloy nginx
+./scripts/bootstrap-orgs.sh                            # starts Grafana, creates orgs
+docker compose --profile ui up -d uptime-kuma
+docker compose --profile ui --profile setup run --rm uptime-kuma-init</code></pre>
+<p>The US VM is the same without the <code>ui</code> profile, with <code>OBS_ENV_LABEL=us</code>, <code>PEER_ALLOW_IP</code> set to India's IP and <code>UPTIME_DOMAIN</code> empty.</p>
+<h3 id="setup-host">Each monitored VM</h3>
+<pre><code>cd /opt/kubocare-observability/hosts
+./install.sh &lt;uat|prod&gt; &lt;app|db|kafka|mqtt|vpn&gt; &lt;hostname&gt; https://obs-in.kubocare.ai   # obs-us for US
+docker logs alloy --tail 25
+curl -I https://obs-in.kubocare.ai/api/v1/write        # 401 means TLS and nginx are reachable</code></pre>
+<p>Then in Grafana Explore: <code>up</code> on Mimir should list the host, <code>{env="uat"}</code> on Loki should stream logs.</p>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="gaps">
+<h2 id="gaps">Gaps and gotchas I found</h2>
+<p>From reading the config only. Nothing here was tested against the live VMs, so treat each as "likely, verify first".</p>
+<table>
+<tr><th>Sev</th><th>Finding</th><th>Evidence</th><th>Effect</th></tr>
+<tr><td><span class="sev hi">High</span></td><td>Three alerts fire when things are healthy</td><td><code>kc-baselines-stale</code>, <code>kc-wellness-stale</code> and <code>kafka-connect-mqtt-source</code> already filter inside the query (<code>&gt; 93600</code>, <code>== 0</code>), so a healthy system returns no data, and they set <code>noDataState: Alerting</code>.</td><td>Constant false alerts in the ops inbox, so real ones get ignored. Fix: query the raw value and let threshold C decide, or set no-data to OK.</td></tr>
+<tr><td><span class="sev hi">High</span></td><td>Postgres KPI SQL probably never loads</td><td><code>db.alloy</code> reads <code>/etc/alloy/postgres-queries.yaml</code>; <code>hosts/docker-compose.yml</code> mounts it at <code>/etc/alloy-config/postgres-queries.yaml</code>.</td><td>No <code>kubocare_*</code> metrics. The fall-webhook and outbox alerts use no-data OK, so they stay silent exactly when they matter.</td></tr>
+<tr><td><span class="sev mid">Med</span></td><td>Dead man's switch is not wired</td><td><code>DEADMAN_PING_URL</code> is passed to Grafana but no contact point uses it. The heartbeat routes to the default email receiver.</td><td>If the whole stack dies, nobody is told; meanwhile ops gets a heartbeat email every 4 h.</td></tr>
+<tr><td><span class="sev mid">Med</span></td><td>Daily pipeline alert is a placeholder</td><td>Rule comment says to adjust the regex; no <code>daily-pipeline</code> service is known, and no-data is Alerting.</td><td>Fires forever until wired to a real log line.</td></tr>
+<tr><td><span class="sev mid">Med</span></td><td>Browser RUM is not live</td><td>The web app still ships Datadog (<code>KuboCare-frontend-WEB/observability/datadog.web.ts</code>), no Faro SDK. nginx answers CORS preflight with a bare 204, likely without CORS headers.</td><td>Faro path is ready on the server side only. Test a real cross-origin POST before switching.</td></tr>
+<tr><td><span class="sev lo">Low</span></td><td>Some scrape targets are always down</td><td>Gateway has no Prometheus <code>/metrics</code> endpoint; Kafka JMX on 9404 is not added yet; empty <code>FDS_REDIS_ADDR</code> points at port 1; obs-us Prometheus scrapes a Grafana that is not there.</td><td>Noise in <code>up</code>, no alert fires on it. The gateway needs instrumenting before app metrics exist.</td></tr>
+<tr><td><span class="sev lo">Low</span></td><td>Docs drift</td><td><code>.env.example</code> and <code>hosts/.env.example</code> say <code>obs-india.kubocare.ai</code>; README and nginx default say <code>monitoring</code> / <code>obs-in</code>. <code>prometheus.yml</code> calls itself a remote-write receiver but it only scrapes the stack. Loki comment says uat keeps less, but both are 90 days.</td><td>Confusing on a fresh install.</td></tr>
+<tr><td><span class="sev lo">Low</span></td><td>One shared push password</td><td>Every host and the peer use user <code>alloy</code>. The committed README also contains real-looking cloud identifiers and example passwords.</td><td>One leak lets anyone push junk data into any region. Rotation means touching every VM.</td></tr>
+<tr><td><span class="sev lo">Low</span></td><td>Single node, no replication</td><td>Mimir and Loki use replication factor 1 and in-memory rings.</td><td>Fine for cost. Losing the VM disk loses the last couple of hours not yet in Blob.</td></tr>
+</table>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="where-to-start">
+<h2 id="where-to-start">Where to start reading</h2>
+<ol>
+<li><code>docker-compose.yml</code>: what runs centrally and why (comments are good).</li>
+<li><code>nginx/obs.conf.template</code>: every way in.</li>
+<li><code>hosts/alloy/base.alloy</code>, then your role file.</li>
+<li><code>hosts/alloy/postgres-queries.yaml</code> with <code>grafana/provisioning/alerting/rules-kubocare.yaml</code>: the product alerts.</li>
+<li><code>grafana/provisioning/datasources/*.yaml</code>: how one Grafana sees two regions.</li>
+</ol>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<!-- /doc:content -->
+</main>
+</div>
+<footer class="doc-footer"><a href="index.html">All docs</a> &middot; <a href="#top">Back to top</a></footer>
+</body>
+</html>
