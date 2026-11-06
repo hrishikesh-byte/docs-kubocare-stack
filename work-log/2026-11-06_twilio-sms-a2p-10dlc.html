@@ -71,7 +71,7 @@ pre.mermaid{background:none;text-align:center}
 <table>
 <tr><th>Step</th><th>State</th></tr>
 <tr><td>Brand "Kubo Care A2P Brand", Low volume standard</td><td>Approved (Twilio email 2026-11-03)</td></tr>
-<tr><td>Campaign on <code>alerts_messaging_service</code></td><td>Not submitted yet. Vetting takes 1 to 7 business days</td></tr>
+<tr><td>Campaign on "KuboCare Fall Alerts Links"</td><td>Not submitted yet. Vetting takes 1 to 7 business days</td></tr>
 <tr><td>End to end SMS test to a US phone</td><td>Pending campaign approval</td></tr>
 </table>
 <p class="top"><a href="#top">Back to top</a></p>
@@ -87,7 +87,7 @@ pre.mermaid{background:none;text-align:center}
 <tr><td>PROD-US</td><td><code>gateway/.env</code></td><td>ends 7169</td><td>not set</td></tr>
 </table>
 <ul>
-<li>The number ending 7169 is the only one already in a Messaging Service (<code>alerts_messaging_service</code>). Register the campaign on that service.</li>
+<li>The number ending 7169 now sits in the Messaging Service "KuboCare Fall Alerts Links" (<code>MG82e7...a9fe</code>), its only sender. It used to be in "KuboCare Fall Alerts Links"; a number can only be in one service. The campaign is registered on "KuboCare Fall Alerts Links".</li>
 <li>The account has 4 other US 10DLC numbers, all unassigned. None of them are used for SMS.</li>
 <li>No env sets <code>TWILIO_MESSAGING_SERVICE_SID</code>. The gateway sends with <code>from_=TWILIO_FROM_NUMBER</code>, which works once that number is in a Messaging Service linked to an approved campaign. No code change needed.</li>
 </ul>
@@ -119,7 +119,7 @@ pre.mermaid{background:none;text-align:center}
 <section class="doc-section" aria-labelledby="left">
 <h2 id="left">What is left</h2>
 <ul>
-<li>Submit the campaign on <code>alerts_messaging_service</code>.</li>
+<li>Submit the campaign on "KuboCare Fall Alerts Links".</li>
 <li>Add "Reply STOP to opt out." to the SMS body in <code>fall_sms_service.py</code> so the real message matches the campaign sample.</li>
 <li>Get a US phone for the end to end test. Run it on UAT for a working replay link.</li>
 </ul>
