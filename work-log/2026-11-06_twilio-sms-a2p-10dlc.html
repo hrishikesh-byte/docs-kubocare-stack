@@ -98,7 +98,7 @@ pre.mermaid{background:none;text-align:center}
 <ul>
 <li>Use case: Account Notification.</li>
 <li>Description: fall alerts to registered caregivers of elderly residents monitored by KuboCare sensors, with a link to a short replay.</li>
-<li>Sample message: the real body from <code>gateway/app/services/fall_sms_service.py</code>, with a sample <code>/r/</code> link on our own domain and "Reply STOP to opt out." added.</li>
+<li>Sample messages: one campaign covers every SMS sent from the number ending 7169, so list both types. (1) The fall replay link from <code>gateway/app/services/fall_sms_service.py</code>, with a sample <code>/r/</code> link on our own domain. (2) The existing pause-button low-battery alert from <code>handle_twilio_sms</code> in <code>gateway/app/services/mqtt_callbacks.py</code>. Add "Reply STOP to opt out." to both.</li>
 <li>Opt-in: the facility admin or the caregiver adds the mobile number during onboarding and turns on SMS alerts. Link a public privacy policy on kubocare.ai.</li>
 <li>Embedded links: yes. Phone numbers: no.</li>
 </ul>
