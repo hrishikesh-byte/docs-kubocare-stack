@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Twilio SMS: A2P 10DLC registration and sender numbers</title>
+<style>
+*{box-sizing:border-box}
+body{font:15px/1.6 system-ui,sans-serif;margin:0;color:#1f2328;background:#fff}
+a{color:#0969da}
+.doc-header{background:#f6f8fa;border-bottom:1px solid #d0d7de;padding:1.2rem 1.5rem}
+.doc-header h1{margin:.3rem 0;font-size:1.7rem;line-height:1.25}
+.crumbs{font-size:13px;color:#59636e}.crumbs a{text-decoration:none}
+.meta{margin:0;font-size:13px;color:#59636e}
+.badge{display:inline-block;padding:0 .5em;border-radius:1em;font-size:12px;background:#ddf4ff;color:#0550ae;margin-right:.4em}
+.badge.old{background:#fff1e5;color:#953800}
+.layout{display:grid;grid-template-columns:270px minmax(0,1fr);gap:2rem;max-width:1320px;margin:0 auto;padding:1.5rem}
+.toc{position:sticky;top:1rem;align-self:start;max-height:calc(100vh - 2rem);overflow:auto;font-size:13.5px;border-right:1px solid #d0d7de;padding-right:1rem}
+.toc-title{font-weight:600;text-transform:uppercase;letter-spacing:.04em;font-size:12px;color:#59636e;margin:0 0 .5rem}
+.toc ul{list-style:none;margin:0;padding:0}.toc li{margin:.25rem 0}
+.toc ul ul{padding-left:.9rem;border-left:2px solid #eaeef2;margin:.2rem 0 .4rem}
+.toc a{text-decoration:none;color:#1f2328}.toc a:hover{color:#0969da}
+main{min-width:0}
+.doc-section{border-top:1px solid #eaeef2;padding-top:.4rem;margin-top:1.6rem}
+.doc-section.intro{border:0;margin-top:0;padding-top:0}
+h2{font-size:1.35rem;margin:.6rem 0}h3{font-size:1.1rem}
+h2,h3,h4{scroll-margin-top:1rem}
+.top{text-align:right;font-size:12px;margin:.6rem 0 0}.top a{color:#59636e;text-decoration:none}
+code,pre{font-family:ui-monospace,monospace;font-size:13px;background:#f6f8fa;border-radius:4px}
+code{padding:.1em .3em}pre{padding:.8rem;overflow:auto}pre code{padding:0;background:none}
+table{border-collapse:collapse;display:block;overflow:auto;margin:1rem 0}
+th,td{border:1px solid #d0d7de;padding:.35rem .7rem;text-align:left;vertical-align:top}
+th{background:#f6f8fa}
+blockquote{margin:0;padding:0 1rem;color:#59636e;border-left:.25em solid #d0d7de}
+pre.mermaid{background:none;text-align:center}
+.doc-footer{max-width:1320px;margin:0 auto;padding:1rem 1.5rem 2rem;font-size:13px;color:#59636e;border-top:1px solid #d0d7de}
+@media (max-width:1000px){.layout{grid-template-columns:1fr}.toc{position:static;max-height:none;border-right:0;border-bottom:1px solid #d0d7de;padding:0 0 1rem}}
+</style>
+</head>
+<body>
+<!-- doc:header -->
+<header class="doc-header" id="top">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../index.html">Stack docs</a> / Work log</nav>
+<h1 id="twilio-sms-a2p-10dlc">Twilio SMS: A2P 10DLC registration and sender numbers</h1>
+<p class="meta"><span class="badge">Work log</span> Date 2026-11-06 <code>work-log/2026-11-06_twilio-sms-a2p-10dlc.html</code></p>
+</header>
+<!-- /doc:header -->
+<div class="layout">
+<nav class="toc" aria-label="Contents">
+<p class="toc-title">Contents</p>
+<ul><li><a href="#why">Why</a></li><li><a href="#status">Registration status</a></li><li><a href="#numbers">Sender numbers per env</a></li><li><a href="#campaign">Campaign details to submit</a></li><li><a href="#e2e">End to end test plan</a></li><li><a href="#left">What is left</a></li></ul>
+<p class="toc-title" style="margin-top:1rem"><a href="../index.html">All docs</a></p>
+</nav>
+<main>
+<!-- doc:content -->
+<section class="doc-section intro">
+<p>Twilio A2P brand approved; SMS sends from the number ending 7169 in every env, and the campaign is the next step before fall-alert SMS can reach US phones.</p>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="why">
+<h2 id="why">Why</h2>
+<ul>
+<li>US carriers block SMS from 10DLC numbers (normal US local numbers) unless the sender has an approved brand and campaign. This is called A2P 10DLC registration.</li>
+<li>Until a campaign is approved, every number in the Twilio account shows "Messaging disabled". Voice calls are not affected.</li>
+<li>10DLC only covers US numbers texting US phones. Texts to Indian phones fall under India's DLT rules, which is a separate registration.</li>
+</ul>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="status">
+<h2 id="status">Registration status</h2>
+<table>
+<tr><th>Step</th><th>State</th></tr>
+<tr><td>Brand "Kubo Care A2P Brand", Low volume standard</td><td>Approved (Twilio email 2026-11-03)</td></tr>
+<tr><td>Campaign on <code>alerts_messaging_service</code></td><td>Not submitted yet. Vetting takes 1 to 7 business days</td></tr>
+<tr><td>End to end SMS test to a US phone</td><td>Pending campaign approval</td></tr>
+</table>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="numbers">
+<h2 id="numbers">Sender numbers per env</h2>
+<p>Read from the env files in the team vault (<code>ENV/{DEV,UAT,PROD-IN,PROD-US}</code>). Last 4 digits only; full numbers are in the vault and the Twilio Console.</p>
+<table>
+<tr><th>Env</th><th>File</th><th><code>TWILIO_FROM_NUMBER</code> (SMS + voice)</th><th><code>TWILIO_WHATSAPP_FROM</code></th></tr>
+<tr><td>DEV</td><td><code>kubocare-backend/.env</code></td><td>ends 7169</td><td>not set</td></tr>
+<tr><td>UAT</td><td><code>kubocare-backend/.env</code></td><td>ends 7169</td><td>ends 6016</td></tr>
+<tr><td>PROD-IN</td><td><code>gateway/.env</code></td><td>ends 7169</td><td>not set</td></tr>
+<tr><td>PROD-US</td><td><code>gateway/.env</code></td><td>ends 7169</td><td>not set</td></tr>
+</table>
+<ul>
+<li>The number ending 7169 is the only one already in a Messaging Service (<code>alerts_messaging_service</code>). Register the campaign on that service.</li>
+<li>The account has 4 other US 10DLC numbers, all unassigned. None of them are used for SMS.</li>
+<li>No env sets <code>TWILIO_MESSAGING_SERVICE_SID</code>. The gateway sends with <code>from_=TWILIO_FROM_NUMBER</code>, which works once that number is in a Messaging Service linked to an approved campaign. No code change needed.</li>
+</ul>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="campaign">
+<h2 id="campaign">Campaign details to submit</h2>
+<ul>
+<li>Use case: Account Notification.</li>
+<li>Description: fall alerts to registered caregivers of elderly residents monitored by KuboCare sensors, with a link to a short replay.</li>
+<li>Sample message: the real body from <code>gateway/app/services/fall_sms_service.py</code>, with a sample <code>/r/</code> link on our own domain and "Reply STOP to opt out." added.</li>
+<li>Opt-in: the facility admin or the caregiver adds the mobile number during onboarding and turns on SMS alerts. Link a public privacy policy on kubocare.ai.</li>
+<li>Embedded links: yes. Phone numbers: no.</li>
+</ul>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="e2e">
+<h2 id="e2e">End to end test plan</h2>
+<ol>
+<li>Set a test caregiver's <code>country_code</code> to <code>+1</code> and <code>mobile</code> to a US phone. Set <code>resident_profile.sms_alert = true</code>.</li>
+<li>Gateway env: <code>FALL_ALERT_CHANNEL=sms</code>, <code>SMS_FALL_ALERT_ENABLED=true</code>, and a public <code>PUBLIC_BASE_URL</code> (needed for the status callback and the link).</li>
+<li>Trigger a fall on <code>kcsn0008</code> after <code>redis-cli del kcsn0008_room1</code>.</li>
+<li>Check: the SMS arrives, Twilio Messaging logs show Delivered (error 30034 means the number is not linked to the campaign), the <code>fall_replay_sms</code> row reaches <code>delivered</code>, and the link opens the replay.</li>
+<li>Reply STOP, trigger another fall: Twilio should block it with error 21610. Reply START to undo.</li>
+</ol>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<section class="doc-section" aria-labelledby="left">
+<h2 id="left">What is left</h2>
+<ul>
+<li>Submit the campaign on <code>alerts_messaging_service</code>.</li>
+<li>Add "Reply STOP to opt out." to the SMS body in <code>fall_sms_service.py</code> so the real message matches the campaign sample.</li>
+<li>Get a US phone for the end to end test. Run it on UAT for a working replay link.</li>
+</ul>
+<p class="top"><a href="#top">Back to top</a></p>
+</section>
+<!-- /doc:content -->
+</main>
+</div>
+<footer class="doc-footer"><a href="../index.html">All docs</a> &middot; <a href="#top">Back to top</a></footer>
+</body>
+</html>
