@@ -72,7 +72,7 @@ pre.mermaid{background:none;text-align:center}
 </section>
 <section class="doc-section" aria-labelledby="change">
 <h2 id="change">What changed</h2>
-<p>Repo <code>gateway</code>, branch <code>dev-in-hrishikesh</code>. Merged <code>dev-in</code> (<code>d6111ee</code>) first. Not committed yet, waiting for Hrishi.</p>
+<p>Repo <code>gateway</code>, branch <code>dev-in-hrishikesh</code>. Merged <code>dev-in</code> (<code>d6111ee</code>) first. Commit <code>c4ab985</code>, pushed.</p>
 <table>
 <tr><th>Change</th><th>Files</th></tr>
 <tr><td>Ring cap is now a code constant, <code>STREAM_MAXLEN = 6000</code> (about 5 min). No env var, so server env files can't pin it back to 24,000.</td><td><code>relay/redis_ring.py</code></td></tr>
@@ -133,7 +133,7 @@ pre.mermaid{background:none;text-align:center}
 <section class="doc-section" aria-labelledby="left">
 <h2 id="left">What is left</h2>
 <ul>
-<li>Commit and push to <code>dev-in-hrishikesh</code> once Hrishi approves.</li>
+
 <li>Do the manual local check above.</li>
 <li>Delete the dead env lines on UAT, PROD-IN and PROD-US.</li>
 <li>Follow-ups: reuse one S3 client, and have non-leaders unsubscribe from <code>radaq/#</code> entirely.</li>

@@ -62,7 +62,7 @@ pre.mermaid{background:none;text-align:center}
 <h2 id="branches">Branches</h2>
 <table>
 <tr><th>Repo</th><th>Working branch</th><th>Base branch</th><th>Head on 2026-10-18</th></tr>
-<tr><td>gateway</td><td><code>dev-in-hrishikesh</code></td><td><code>dev-in</code></td><td><code>d6111ee</code> (equal to base), relay ingest CPU fix uncommitted on top</td></tr>
+<tr><td>gateway</td><td><code>dev-in-hrishikesh</code></td><td><code>dev-in</code></td><td><code>c4ab985</code> on 2026-11-19 (base <code>d6111ee</code> + relay ingest CPU fix), pushed</td></tr>
 <tr><td>KuboCare-Socket</td><td><code>dev-in-hrishikesh</code></td><td><code>dev-in</code></td><td><code>5e5fb00</code> on 2026-11-04 (base <code>cae0cb4</code> + /healthz), pushed</td></tr>
 <tr><td>KuboCare-frontend-WEB</td><td><code>dev-fastapi-hrishikesh</code></td><td><code>dev-fastapi</code></td><td><code>b2fe254</code> (equal to base)</td></tr>
 <tr><td>fds-inference</td><td>none, read only (Hitesh's)</td><td><code>hitesh-dev-in</code></td><td><code>363c3cc</code></td></tr>
@@ -77,7 +77,7 @@ pre.mermaid{background:none;text-align:center}
 <h2 id="in-progress">In progress</h2>
 <table>
 <tr><th>Work</th><th>Repo</th><th>State</th><th>Log</th></tr>
-<tr><td>Relay ingest CPU: Redis ring 20 min to 5 min (constant), non-leaders skip radar parsing, assembler sweep throttled, dead relay env vars removed</td><td>gateway</td><td>Code and tests done (125 pass), not committed yet; manual local check pending; server env files still carry the dead lines</td><td><a href="work-log/2026-11-19_relay-ingest-cpu.html">2026-11-19</a></td></tr>
+<tr><td>Relay ingest CPU: Redis ring 20 min to 5 min (constant), non-leaders skip radar parsing, assembler sweep throttled, dead relay env vars removed</td><td>gateway</td><td>Pushed (gateway <code>c4ab985</code>, 125 tests pass); manual local check pending; server env files still carry the dead lines</td><td><a href="work-log/2026-11-19_relay-ingest-cpu.html">2026-11-19</a></td></tr>
 <tr><td>Twilio SMS A2P 10DLC: brand approved, SMS sender is the number ending 7169 in every env</td><td>Twilio, gateway</td><td>Campaign not submitted yet; end to end SMS test waits on approval</td><td><a href="work-log/2026-11-06_twilio-sms-a2p-10dlc.html">2026-11-06</a></td></tr>
 <tr><td>Socket <code>GET /healthz</code> for Uptime Kuma, no flag</td><td>socket</td><td>UAT live and green in Kuma; prod-in / prod-us pending promotion, then switch their Kuma URLs to <code>/healthz</code></td><td><a href="work-log/2026-11-04_socket-healthz.html">2026-11-04</a></td></tr>
 <tr><td>kubocare-observability end to end guide</td><td>docs</td><td>Written (<a href="OBSERVABILITY.html">OBSERVABILITY</a>); lists 2 high-severity config gaps to raise with the owner</td><td></td></tr>
@@ -109,7 +109,7 @@ pre.mermaid{background:none;text-align:center}
 <li>Twilio SMS: submit the A2P campaign on "KuboCare Fall Alerts Links", add "Reply STOP to opt out." to the fall SMS body, then run the end to end test to a US phone on UAT.</li>
 <li>Make the stack runnable on this laptop: install <code>uv</code>, copy the three <code>.env</code> files from the vault, check Postgres, then <code>bash scripts/setup.sh</code>.</li>
 <li>Copy the labeled corpus (<code>unwanted/</code>, 6.2 GB) from the old laptop if corpus tests are needed.</li>
-<li>Relay ingest CPU: commit and push the gateway change, run the manual local check, then compare prod-us CPU and Redis memory after it ships.</li>
+<li>Relay ingest CPU: run the manual local check, then compare prod-us CPU and Redis memory after it ships.</li>
 <li>Push the three working branches when Hrishi says so.</li>
 <li>Flag audit: list every feature flag in the stack, sort into release (remove once stable) vs ops (keep), per the new gating rule.</li>
 <li>Extended post-fall replay: measure a 70 s clip size, and set DEV's <code>INCIDENT_WINDOW_SEC</code> back to 10 (it pins 30) before enabling the flag on a deployed env.</li>
